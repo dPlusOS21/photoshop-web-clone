@@ -8,6 +8,9 @@
                 { label: '(nessuno)', disabled: true }
             ]},
             { sep: true },
+            { label: 'Ripristina sessione locale', action: 'session-restore' },
+            { label: 'Cancella sessione locale', action: 'session-clear' },
+            { sep: true },
             { label: 'Chiudi', shortcut: 'Ctrl+W', action: 'close' },
             { label: 'Salva', shortcut: 'Ctrl+S', action: 'save' },
             { label: 'Salva con nome...', shortcut: 'Ctrl+Shift+S', action: 'save-as' },
@@ -309,6 +312,19 @@
         // Bind menu actions
         const map = {
             'new': () => document.getElementById('dialog-new-doc').classList.remove('hidden'),
+            'session-restore': async () => {
+                const ok = await window.PSStorage.restoreIntoEditor(editor);
+                window.PSBus.emit('status:flash', ok ? 'Sessione ripristinata' : 'Nessuna sessione salvata');
+            },
+            'session-clear': async () => {
+                const ok = await window.PSModal.confirm(
+                    'Vuoi cancellare la sessione salvata localmente?\nIl documento corrente non verrà toccato fino al prossimo salvataggio automatico.',
+                    'Cancella sessione locale'
+                );
+                if (!ok) return;
+                await window.PSStorage.clearSaved();
+                window.PSBus.emit('status:flash', 'Sessione locale cancellata');
+            },
             'open': () => document.getElementById('hidden-file-input').click(),
             'save': () => window.PSAPI.saveActive(editor),
             'save-as': () => window.PSAPI.exportActive(editor, 'png'),

@@ -124,6 +124,13 @@ Non serve nessuna configurazione: SQLite è incluso in PHP.
 - **Esporta**: PNG / JPG / WebP (compressione 95%)
 - **Salva**: invia il progetto al backend PHP (multi-layer .pswc.json). Fallback
   download locale del .pswc.json se il backend non risponde
+- **Autosave persistente** (IndexedDB del browser): ogni azione viene salvata
+  automaticamente in locale; alla riapertura della pagina la sessione viene
+  ripristinata esattamente com'era (tutti i livelli, opacità, blend, selezione,
+  livello attivo). Funziona anche offline e su GitHub Pages.
+- **Preferenze utente** (localStorage): tema, strumento attivo, colori primo
+  piano/sfondo, dimensione pennello, livello di zoom — vengono tutti ricordati
+  tra le sessioni.
 
 ### Backend
 - `GET  /backend/api/health.php` — diagnostica

@@ -18,7 +18,7 @@
         });
     }
 
-    function boot() {
+    async function boot() {
         const editor = new window.PSEditor();
         window.editor = editor; // for debug
         editor.init();
@@ -50,9 +50,30 @@
         window.PSUI.initTheme();
         window.PSAPI.bindOpen(editor);
 
-        // Initial document
-        editor.createDocument({ name: 'Senza titolo-1', width: 1920, height: 1080, bg: 'white' });
-        editor.setActiveTool('brush');
+        // Apply saved preferences (colors, brush size) BEFORE creating doc
+        const prefs = window.PSStorage.loadPrefs();
+        if (prefs.fgColor) editor.fgColor = prefs.fgColor;
+        if (prefs.bgColor) editor.bgColor = prefs.bgColor;
+        if (typeof prefs.brushSize === 'number') editor.brushSize = prefs.brushSize;
+
+        // Try to restore previous session from IndexedDB; if absent, create default doc
+        const restored = await window.PSStorage.restoreIntoEditor(editor);
+        if (!restored) {
+            editor.createDocument({ name: 'Senza titolo-1', width: 1920, height: 1080, bg: 'white' });
+        } else {
+            window.PSBus.emit('status:flash', 'Sessione ripristinata dall\'archivio locale');
+        }
+
+        // Activate saved tool (or brush by default)
+        editor.setActiveTool(prefs.tool && editor.tools[prefs.tool] ? prefs.tool : 'brush');
+
+        // Emit color events so UI panels refresh
+        window.PSBus.emit('color:fg', editor.fgColor);
+        window.PSBus.emit('color:bg', editor.bgColor);
+        window.PSBus.emit('brush:size', editor.brushSize);
+
+        // Start autosave binding (must run AFTER initial doc is in place)
+        window.PSStorage.bind(editor);
 
         // Resize observer for rulers
         window.addEventListener('resize', () => editor.viewport.drawRulers());
