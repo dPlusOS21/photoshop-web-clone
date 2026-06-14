@@ -19,6 +19,17 @@ jobs:
           REPO="${GITHUB_REPOSITORY##*/}"
           git clone --bare "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo.git
           cd repo.git
-          git push --force --prune \
-            "https://thecloners21:${CB_TOKEN}@codeberg.org/thecloners21/${REPO}.git" \
-            'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
+          DEST="https://thecloners21:${CB_TOKEN}@codeberg.org/thecloners21/${REPO}.git"
+          n=0
+          until [ "$n" -ge 6 ]; do
+            if git push --force --prune "$DEST" \
+                 'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'; then
+              echo "Push verso Codeberg riuscito."
+              exit 0
+            fi
+            n=$((n+1))
+            echo "Tentativo $n fallito (probabile 504 transitorio), ritento tra 30s..."
+            sleep 30
+          done
+          echo "Push fallito dopo $n tentativi."
+          exit 1
